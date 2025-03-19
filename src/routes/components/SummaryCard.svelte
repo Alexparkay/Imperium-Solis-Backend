@@ -17,17 +17,19 @@
 <script lang="ts">
   import Table from './Table.svelte';
 
-  export let title: string = '';
-  export let icon: string = '';
+  export let icon: string;
+  export let title: string;
   export let rows: {
     name: string;
     value: string;
     units?: string;
     icon?: string;
-  }[] = [];
+  }[];
+  export let class_name: string = '';
+  export let style: string = '';
 </script>
 
-<div class="grid justify-items-start surface on-surface-text p-4 rounded-lg shadow-lg">
+<div class="p-4 surface on-surface-text rounded-lg shadow-md {class_name}" {style}>
   <div class="flex items-center primary-text">
     <md-icon class="w-8">{icon}</md-icon>
     <p class="body-large"><b>{title}</b></p>

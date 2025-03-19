@@ -16,6 +16,7 @@
 
 <script lang="ts">
   import { slide } from 'svelte/transition';
+  import Icon from '../../components/Icon.svelte';
 
   export let title: string;
   export let subtitle = '';
@@ -31,16 +32,23 @@
   }
 </script>
 
-<button class="flex flex-row w-full p-4" on:click={toggle}>
-  <md-icon class={`${titleText} w-12`}>{icon}</md-icon>
+<button 
+  class="flex flex-row w-full p-4 hover:bg-dark-hover active:bg-dark-active transition-colors duration-200 text-dark-text cursor-pointer"
+  on:click={toggle}
+>
+  <Icon icon={icon} className="text-dark-primary w-12" />
   <div class="w-full grid justify-items-start text-left">
-    <p class={`${titleText} body-large`}><b>{title}</b></p>
-    <p class="label-medium outline-text">{subtitle}</p>
-    <p class="label-medium outline-text">{subtitle2}</p>
+    <p class="text-dark-primary body-large font-medium">{title}</p>
+    {#if subtitle}
+      <p class="text-dark-text-secondary text-sm">{subtitle}</p>
+    {/if}
+    {#if subtitle2}
+      <p class="text-dark-text-secondary text-sm">{subtitle2}</p>
+    {/if}
   </div>
-  <md-icon-button>
-    <md-icon>{section == title ? 'expand_less' : 'expand_more'}</md-icon>
-  </md-icon-button>
+  <div class="flex items-center justify-center w-10 h-10 text-dark-text-secondary">
+    <Icon icon={section == title ? 'expand_less' : 'expand_more'} className="text-2xl transition-transform duration-200" />
+  </div>
 </button>
 
 {#if section == title}

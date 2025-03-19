@@ -22,4 +22,24 @@ export default defineConfig({
   test: {
     include: ['src/**/*.{test,spec}.{js,ts}'],
   },
+  build: {
+    target: 'es2015',
+    minify: 'terser',
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['svelte'],
+        }
+      }
+    }
+  },
+  server: {
+    fs: {
+      strict: false
+    }
+  },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify('production')
+  }
 });

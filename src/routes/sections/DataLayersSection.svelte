@@ -79,11 +79,12 @@
   let layer: Layer | undefined;
   let imageryQuality: 'HIGH' | 'MEDIUM' | 'LOW';
 
-  let playAnimation = true;
-  let tick = 0;
-  let month = 0;
+  let selectedMonth = '0';  // Store month as string for Dropdown
+  let monthNumber = 0;  // Store month as number for Calendar
   let day = 14;
   let hour = 0;
+
+  $: monthNumber = parseInt(selectedMonth);
 
   let overlays: google.maps.GroundOverlay[] = [];
   let showRoofOnly = false;
@@ -97,10 +98,10 @@
       showRoofOnly = ['annualFlux', 'monthlyFlux', 'hourlyShade'].includes(layerId);
       map.setMapTypeId(layerId == 'rgb' ? 'roadmap' : 'satellite');
       overlays.map((overlay) => overlay.setMap(null));
-      month = layerId == 'hourlyShade' ? 3 : 0;
+      selectedMonth = layerId == 'hourlyShade' ? '3' : '0';
+      monthNumber = parseInt(selectedMonth);
       day = 14;
       hour = 5;
-      playAnimation = ['monthlyFlux', 'hourlyShade'].includes(layerId);
     }
     if (layerId == 'none') {
       return;
@@ -114,7 +115,8 @@
         new google.maps.LatLng(ne.latitude, ne.longitude),
         new google.maps.LatLng(sw.latitude, sw.longitude),
       );
-      const radius = Math.ceil(diameter / 2);
+      // Ensure minimum radius of 100 meters for monthlyFlux data
+      const radius = Math.max(Math.ceil(diameter / 2), layerId === 'monthlyFlux' ? 100 : 50);
       try {
         dataLayersResponse = await getDataLayerUrls(center, radius, googleMapsApiKey);
       } catch (e) {
@@ -136,12 +138,12 @@
     console.log('Render layer:', {
       layerId: layer.id,
       showRoofOnly: showRoofOnly,
-      month: month,
+      month: monthNumber,
       day: day,
     });
     overlays.map((overlay) => overlay.setMap(null));
     overlays = layer
-      .render(showRoofOnly, month, day)
+      .render(showRoofOnly, monthNumber, day)
       .map((canvas) => new google.maps.GroundOverlay(canvas.toDataURL(), bounds));
 
     if (!['monthlyFlux', 'hourlyShade'].includes(layer.id)) {
@@ -150,7 +152,7 @@
   }
 
   $: if (layer?.id == 'monthlyFlux') {
-    overlays.map((overlay, i) => overlay.setMap(i == month ? map : null));
+    overlays.map((overlay, i) => overlay.setMap(i == monthNumber ? map : null));
   } else if (layer?.id == 'hourlyShade') {
     overlays.map((overlay, i) => overlay.setMap(i == hour ? map : null));
   }
@@ -158,44 +160,30 @@
   function onSliderChange(event: Event) {
     const target = event.target as MdSlider;
     if (layer?.id == 'monthlyFlux') {
-      if (target.valueStart != month) {
-        month = target.valueStart ?? 0;
-      } else if (target.valueEnd != month) {
-        month = target.valueEnd ?? 0;
+      if (target.valueStart != parseInt(selectedMonth)) {
+        selectedMonth = target.valueStart?.toString() ?? '0';
+      } else if (target.valueEnd != parseInt(selectedMonth)) {
+        selectedMonth = target.valueEnd?.toString() ?? '0';
       }
-      tick = month;
     } else if (layer?.id == 'hourlyShade') {
       if (target.valueStart != hour) {
         hour = target.valueStart ?? 0;
       } else if (target.valueEnd != hour) {
         hour = target.valueEnd ?? 0;
       }
-      tick = hour;
-    }
-  }
-
-  $: if (layer?.id == 'monthlyFlux') {
-    if (playAnimation) {
-      month = tick % 12;
-    } else {
-      tick = month;
-    }
-  } else if (layer?.id == 'hourlyShade') {
-    if (playAnimation) {
-      hour = tick % 24;
-    } else {
-      tick = hour;
     }
   }
 
   onMount(() => {
     showDataLayer(true);
-
-    setInterval(() => {
-      tick++;
-    }, 1000);
   });
 </script>
+
+<style>
+  :global(.body-large) {
+    color: black !important;
+  }
+</style>
 
 {#if requestError}
   <div class="error-container on-error-container-text">
@@ -219,20 +207,22 @@
   </div>
 {:else}
   <Expandable bind:section={expandedSection} {icon} {title} subtitle={dataLayerOptions[layerId]}>
-    <div class="flex flex-col space-y-2 px-2">
-      <span class="outline-text label-medium">
-        <b>{title}</b> provides raw and processed imagery and granular details on an area surrounding
+    <div class="flex flex-col space-y-2 px-2 bg-dark-panel rounded-xl">
+      <span class="text-black label-medium">
+        <b class="text-black">{title}</b> provides raw and processed imagery and granular details on an area surrounding
         a location.
       </span>
 
-      <Dropdown
-        bind:value={layerId}
-        options={dataLayerOptions}
-        onChange={async () => {
-          layer = undefined;
-          showDataLayer();
-        }}
-      />
+      <div class="p-3 bg-dark-card rounded-lg shadow-md">
+        <Dropdown
+          bind:value={layerId}
+          options={dataLayerOptions}
+          onChange={async () => {
+            layer = undefined;
+            showDataLayer();
+          }}
+        />
+      </div>
 
       {#if layerId == 'none'}
         <div />
@@ -240,27 +230,49 @@
         <md-linear-progress four-color indeterminate />
       {:else}
         {#if layer.id == 'hourlyShade'}
-          <Calendar bind:month bind:day onChange={async () => showDataLayer()} />
+          <div class="p-3 bg-dark-card rounded-lg shadow-md">
+            <Calendar 
+              month={monthNumber}
+              bind:day 
+              onChange={async (newMonth) => {
+                selectedMonth = newMonth.toString();
+                monthNumber = newMonth;
+                await showDataLayer();
+              }} 
+            />
+          </div>
         {/if}
 
-        <span class="outline-text label-medium">
+        <span class="text-black label-medium p-3 bg-dark-card rounded-lg shadow-md -z-10">
           {#if imageryQuality == 'HIGH'}
-            <p><b>Low altitude aerial imagery</b> available.</p>
-            <p>Imagery and DSM data were processed at <b>10 cm/pixel</b>.</p>
+            <p class="text-black"><b class="text-black">Low altitude aerial imagery</b> available.</p>
+            <p class="text-black">Imagery and DSM data were processed at <b class="text-black">10 cm/pixel</b>.</p>
           {:else if imageryQuality == 'MEDIUM'}
-            <p><b>AI augmented aerial imagery</b> available.</p>
-            <p>Imagery and DSM data were processed at <b>25 cm/pixel</b>.</p>
+            <p class="text-black"><b class="text-black">AI augmented aerial imagery</b> available.</p>
+            <p class="text-black">Imagery and DSM data were processed at <b class="text-black">25 cm/pixel</b>.</p>
           {:else if imageryQuality == 'LOW'}
-            <p><b>AI augmented aerial or satellite imagery</b> available.</p>
-            <p>Imagery and DSM data were processed at <b>50 cm/pixel</b>.</p>
+            <p class="text-black"><b class="text-black">AI augmented aerial or satellite imagery</b> available.</p>
+            <p class="text-black">Imagery and DSM data were processed at <b class="text-black">50 cm/pixel</b>.</p>
           {/if}
         </span>
 
-        <InputBool bind:value={showPanels} label="Solar panels" />
-        <InputBool bind:value={showRoofOnly} label="Roof only" onChange={() => showDataLayer()} />
+        <div class="p-3 bg-dark-card rounded-lg shadow-md -z-10">
+          <InputBool bind:value={showPanels} label="Solar panels" />
+          <InputBool bind:value={showRoofOnly} label="Roof only" onChange={() => showDataLayer()} />
+        </div>
 
-        {#if ['monthlyFlux', 'hourlyShade'].includes(layerId)}
-          <InputBool bind:value={playAnimation} label="Play animation" />
+        {#if layer.id == 'monthlyFlux'}
+          <div class="flex items-center gap-2">
+            <md-icon>calendar_month</md-icon>
+            <Dropdown
+              value={selectedMonth}
+              options={Object.fromEntries(monthNames.map((name, i) => [i.toString(), name]))}
+              onChange={(value) => {
+                selectedMonth = value;
+                showDataLayer();
+              }}
+            />
+          </div>
         {/if}
       {/if}
       <div class="flex flex-row">
@@ -348,47 +360,35 @@
 
 <div class="absolute bottom-6 left-0 w-full">
   <div class="md:mr-96 mr-80 grid place-items-center">
-    {#if layer}
+    {#if layer && layer.id == 'hourlyShade'}
       <div
         class="flex items-center surface on-surface-text pr-4 text-center label-large rounded-full shadow-md"
       >
-        {#if layer.id == 'monthlyFlux'}
-          <md-slider
-            range
-            min={0}
-            max={11}
-            value-start={month}
-            value-end={month}
-            on:input={onSliderChange}
-          />
-          <span class="w-8">{monthNames[month]}</span>
-        {:else if layer.id == 'hourlyShade'}
-          <md-slider
-            range
-            min={0}
-            max={23}
-            value-start={hour}
-            value-end={hour}
-            on:input={onSliderChange}
-          />
-          <span class="w-24 whitespace-nowrap">
-            {monthNames[month]}
-            {day},
-            {#if hour == 0}
-              12am
-            {:else if hour < 10}
-              {hour}am
-            {:else if hour < 12}
-              {hour}am
-            {:else if hour == 12}
-              12pm
-            {:else if hour < 22}
-              {hour - 12}pm
-            {:else}
-              {hour - 12}pm
-            {/if}
-          </span>
-        {/if}
+        <md-slider
+          range
+          min={0}
+          max={23}
+          value-start={hour}
+          value-end={hour}
+          on:input={onSliderChange}
+        />
+        <span class="w-24 whitespace-nowrap">
+          {monthNames[monthNumber]}
+          {day},
+          {#if hour == 0}
+            12am
+          {:else if hour < 10}
+            {hour}am
+          {:else if hour < 12}
+            {hour}am
+          {:else if hour == 12}
+            12pm
+          {:else if hour < 22}
+            {hour - 12}pm
+          {:else}
+            {hour - 12}pm
+          {/if}
+        </span>
       </div>
     {/if}
   </div>

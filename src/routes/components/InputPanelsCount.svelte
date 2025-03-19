@@ -28,11 +28,11 @@
 </script>
 
 <div>
-  <table class="table-auto w-full body-medium secondary-text">
+  <table class="table-auto w-full body-medium text-black">
     <tr>
-      <td class="primary-text"><md-icon>solar_power</md-icon> </td>
-      <th class="pl-2 text-left">Panels count</th>
-      <td class="pl-2 text-right">
+      <td class="text-black"><md-icon>solar_power</md-icon> </td>
+      <th class="pl-2 text-left text-black">Panels count</th>
+      <td class="pl-2 text-right text-black">
         <span>{solarPanelConfigs[configId].panelsCount} panels</span>
       </td>
     </tr>
@@ -43,6 +43,21 @@
     value={configId}
     min={0}
     max={solarPanelConfigs.length - 1}
-    on:change={onChange}
+    on:change={onChange} 
   />
 </div>
+
+<style>
+  /* Override Material Web Components styles to ensure slider is visible */
+  :global(md-slider) {
+    --md-sys-color-primary: #000000;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-on-surface: #000000;
+    --md-sys-color-on-surface-variant: #000000;
+    --md-slider-active-track-color: #000000;
+    --md-slider-handle-color: #000000;
+    --md-slider-inactive-track-color: rgba(0, 0, 0, 0.5);
+    --md-slider-with-tick-marks-active-container-color: #ffffff;
+    --md-slider-with-tick-marks-inactive-container-color: #000000;
+  }
+</style>

@@ -25,10 +25,16 @@
   import SearchBar from './components/SearchBar.svelte';
   import Sections from './sections/Sections.svelte';
 
-  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  // Temporarily hardcoding the API key for testing
+  const googleMapsApiKey = 'AIzaSyDiuUAONlwJP3z3ndp3yyBob5fY_Exup4I';
+  console.log('API Key:', googleMapsApiKey);
   const defaultPlace = {
-    name: 'Rinconada Library',
-    address: '1213 Newell Rd, Palo Alto, CA 94303',
+    name: '303 S Technology Ct',
+    address: '303 S Technology Ct',
+    coordinates: {
+      lat: 37.4385424,
+      lng: -122.1272982
+    }
   };
   let location: google.maps.LatLng | undefined;
   const zoom = 19;
@@ -40,90 +46,96 @@
   let mapsLibrary: google.maps.MapsLibrary;
   let placesLibrary: google.maps.PlacesLibrary;
   onMount(async () => {
-    // Load the Google Maps libraries.
-    const loader = new Loader({ apiKey: googleMapsApiKey });
-    const libraries = {
-      geometry: loader.importLibrary('geometry'),
-      maps: loader.importLibrary('maps'),
-      places: loader.importLibrary('places'),
-    };
-    geometryLibrary = await libraries.geometry;
-    mapsLibrary = await libraries.maps;
-    placesLibrary = await libraries.places;
+    try {
+      // Load the Google Maps libraries.
+      const loader = new Loader({
+        apiKey: googleMapsApiKey,
+        version: "weekly",
+        libraries: ["places", "geometry"],
+      });
+      
+      // Load the main Maps JavaScript API first
+      await loader.load();
+      
+      const libraries = {
+        geometry: loader.importLibrary('geometry'),
+        maps: loader.importLibrary('maps'),
+        places: loader.importLibrary('places'),
+      };
+      
+      geometryLibrary = await libraries.geometry;
+      mapsLibrary = await libraries.maps;
+      placesLibrary = await libraries.places;
 
-    // Get the address information for the default location.
-    const geocoder = new google.maps.Geocoder();
-    const geocoderResponse = await geocoder.geocode({
-      address: defaultPlace.address,
-    });
-    const geocoderResult = geocoderResponse.results[0];
+      try {
+        // Try geocoding first
+        const geocoder = new google.maps.Geocoder();
+        const geocoderResponse = await geocoder.geocode({
+          address: defaultPlace.address,
+        });
+        const geocoderResult = geocoderResponse.results[0];
+        location = geocoderResult.geometry.location;
+      } catch (error: any) {
+        // Only log as warning if it's an authorization error (expected until Geocoding API is enabled)
+        if (error.message?.includes('not authorized')) {
+          console.info('Using default coordinates - enable Geocoding API for address search');
+        } else {
+          console.warn('Geocoding failed, using default coordinates:', error);
+        }
+        // Fall back to default coordinates
+        location = new google.maps.LatLng(defaultPlace.coordinates.lat, defaultPlace.coordinates.lng);
+      }
 
-    // Initialize the map at the desired location.
-    location = geocoderResult.geometry.location;
-    map = new mapsLibrary.Map(mapElement, {
-      center: location,
-      zoom: zoom,
-      tilt: 0,
-      mapTypeId: 'satellite',
-      mapTypeControl: false,
-      fullscreenControl: false,
-      rotateControl: false,
-      streetViewControl: false,
-      zoomControl: false,
-    });
+      // Initialize the map at the desired location.
+      map = new mapsLibrary.Map(mapElement, {
+        center: location,
+        zoom: zoom,
+        tilt: 0,
+        mapTypeId: 'satellite',
+        mapTypeControl: false,
+        fullscreenControl: false,
+        rotateControl: false,
+        streetViewControl: false,
+        zoomControl: false,
+      });
+    } catch (error) {
+      console.error('Error initializing Google Maps:', error);
+      // Add user-friendly error message to the UI
+      const errorMessage = document.createElement('div');
+      errorMessage.className = 'p-4 bg-red-100 text-red-700 rounded-lg';
+      errorMessage.textContent = 'Error loading map. Please check your API configuration.';
+      mapElement.appendChild(errorMessage);
+    }
   });
 </script>
 
 <!-- Top bar -->
-<div class="flex flex-row h-full">
-  <!-- Main map -->
-  <div bind:this={mapElement} class="w-full" />
+<div class="flex flex-col h-full">
+  <!-- Search Bar -->
+  <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 w-96">
+    {#if placesLibrary && map}
+      <SearchBar bind:location {placesLibrary} {map} initialValue={defaultPlace.name} />
+    {/if}
+  </div>
 
-  <!-- Side bar -->
-  <aside class="flex-none md:w-96 w-80 p-2 pt-3 overflow-auto">
-    <div class="flex flex-col space-y-2 h-full">
-      {#if placesLibrary && map}
-        <SearchBar bind:location {placesLibrary} {map} initialValue={defaultPlace.name} />
-      {/if}
+  <div class="flex flex-row h-full">
+    <!-- Main map -->
+    <div bind:this={mapElement} class="w-full" />
 
-      <div class="p-4 surface-variant outline-text rounded-lg space-y-3">
-        <p>
-          <a
-            class="primary-text"
-            href="https://developers.google.com/maps/documentation/solar/overview?hl=en"
-            target="_blank"
-          >
-            Two distinct endpoints of the <b>Solar API</b>
-            <md-icon class="text-sm">open_in_new</md-icon>
-          </a>
-          offer many benefits to solar marketplace websites, solar installers, and solar SaaS designers.
-        </p>
+    <!-- Side bar -->
+    <aside class="flex-none md:w-96 w-80 p-2 pt-3 overflow-auto">
+      <div class="flex flex-col space-y-2 h-full">
+        <!-- Logo -->
+        <div class="p-4 text-center mb-4 bg-white rounded-lg shadow-md flex items-center justify-center">
+          <img src="Logo.svg" alt="Imperium Solis" class="w-full" />
+        </div>
 
-        <p>
-          <b>Click on an area below</b>
-          to see what type of information the Solar API can provide.
-        </p>
+        {#if location}
+          <Sections {location} {map} {geometryLibrary} {googleMapsApiKey} />
+        {/if}
+
+        <div class="grow" />
       </div>
-
-      {#if location}
-        <Sections {location} {map} {geometryLibrary} {googleMapsApiKey} />
-      {/if}
-
-      <div class="grow" />
-
-      <div class="flex flex-col items-center w-full">
-        <md-text-button
-          href="https://github.com/googlemaps-samples/js-solar-potential"
-          target="_blank"
-        >
-          View code on GitHub
-          <img slot="icon" src="github-mark.svg" alt="GitHub" width="16" height="16" />
-        </md-text-button>
-      </div>
-
-      <span class="pb-4 text-center outline-text label-small">
-        This is not an officially supported Google product.
-      </span>
-    </div>
-  </aside>
+    </aside>
+  </div>
 </div>

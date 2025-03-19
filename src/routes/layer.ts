@@ -122,6 +122,15 @@ export async function getLayer(
       };
     },
     monthlyFlux: async () => {
+      if (!urls.monthlyFluxUrl) {
+        throw {
+          error: {
+            code: 400,
+            status: 'INVALID_ARGUMENT',
+            message: 'Monthly flux data is not available for this location. Try increasing the radius or selecting a different location.'
+          }
+        };
+      }
       const [mask, data] = await Promise.all([
         downloadGeoTIFF(urls.maskUrl, googleMapsApiKey),
         downloadGeoTIFF(urls.monthlyFluxUrl, googleMapsApiKey),

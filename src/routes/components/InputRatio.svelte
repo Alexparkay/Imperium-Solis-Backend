@@ -23,6 +23,9 @@
   export let decrease = false;
   export let prefix: string | undefined = undefined;
   export let suffix: string | undefined = '%';
+  export let min: number | undefined = undefined;
+  export let max: number | undefined = undefined;
+  export let step: number | undefined = undefined;
   export let onChange: (x: number) => void = () => {};
 </script>
 
@@ -32,6 +35,9 @@
   {label}
   {prefix}
   {suffix}
+  {min}
+  {max}
+  {step}
   put={(x) =>
     ((decrease ? 1 - x : x - 1) * 100).toLocaleString(undefined, {
       maximumSignificantDigits: 2,

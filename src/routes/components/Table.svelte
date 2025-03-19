@@ -20,22 +20,33 @@
     value: string;
     units?: string;
     icon?: string;
+    tooltip?: string;
+    onInfoClick?: () => void;
   }[] = [];
 </script>
 
-<table class="table-auto w-full body-medium">
+<div class="flex flex-col space-y-2">
   {#each rows as row}
-    <tr>
-      <td class="primary-text py-2">
-        <md-icon>{row.icon ?? ''}</md-icon>
-      </td>
-      <th class="pl-2 text-left">
-        {row.name}
-      </th>
-      <td class="pl-2 text-right">
-        <span>{row.value.toString()}</span>
-        <span class="body-small">{row.units ?? ''}</span>
-      </td>
-    </tr>
+    <div class="flex items-center space-x-2">
+      {#if row.icon}
+        <md-icon class="w-8">{row.icon}</md-icon>
+      {/if}
+      <div class="grow flex items-center gap-1">
+        <span>{row.name}</span>
+        {#if row.tooltip}
+          {#if row.onInfoClick}
+            <md-icon class="text-sm cursor-pointer" title={row.tooltip} on:click={row.onInfoClick}>info</md-icon>
+          {:else}
+            <md-icon class="text-sm" title={row.tooltip}>info</md-icon>
+          {/if}
+        {/if}
+      </div>
+      <div class="flex items-center gap-1">
+        <span>{row.value}</span>
+        {#if row.units}
+          <span class="text-sm">{row.units}</span>
+        {/if}
+      </div>
+    </div>
   {/each}
-</table>
+</div>

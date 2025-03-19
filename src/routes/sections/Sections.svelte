@@ -69,6 +69,7 @@
       {geometryLibrary}
       {location}
       {map}
+      {energyCostPerKwhInput}
     />
   {/if}
 
@@ -93,6 +94,7 @@
       bind:dcToAcDerateInput
       solarPanelConfigs={buildingInsights.solarPotential.solarPanelConfigs}
       defaultPanelCapacityWatts={buildingInsights.solarPotential.panelCapacityWatts}
+      {buildingInsights}
     />
   {/if}
 </div>

@@ -1,0 +1,23 @@
+<svg width="424" height="61" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" overflow="hidden">
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FDB813;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F26522;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2563EB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E40AF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(0, 0)">
+    <!-- Sun Icon -->
+    <circle cx="35" cy="30" r="20" fill="url(#gradient1)" />
+    <path d="M35,5 L35,12 M35,48 L35,55 M5,30 L12,30 M58,30 L65,30 M15,10 L20,15 M50,45 L55,50 M15,50 L20,45 M50,15 L55,10" stroke="#FDB813" stroke-width="3" stroke-linecap="round" />
+    
+    <!-- Company Name -->
+    <text x="75" y="35" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="url(#gradient2)">IMPERIUM SOLIS</text>
+    
+    <!-- Tagline -->
+    <text x="75" y="50" font-family="Arial, sans-serif" font-size="12" fill="#4B5563">Solar Potential Analysis</text>
+  </g>
+</svg>

@@ -31,7 +31,7 @@
   import { panelsPalette } from '../colors';
   import InputBool from '../components/InputBool.svelte';
   import InputPanelsCount from '../components/InputPanelsCount.svelte';
-  import { showNumber } from '../utils';
+  import { showNumber, showMoney } from '../utils';
   import NumberInput from '../components/InputNumber.svelte';
   import Gauge from '../components/Gauge.svelte';
 
@@ -40,6 +40,7 @@
   export let configId: number | undefined;
   export let panelCapacityWatts: number;
   export let showPanels: boolean;
+  export let energyCostPerKwhInput: number;
 
   export let googleMapsApiKey: string;
   export let geometryLibrary: google.maps.GeometryLibrary;
@@ -156,27 +157,26 @@
     bind:section={expandedSection}
     {icon}
     {title}
-    subtitle={`Yearly energy: ${(
-      (panelConfig.yearlyEnergyDcKwh * panelCapacityRatio) /
-      1000
-    ).toFixed(2)} MWh`}
+    subtitle={`Recommended panels: ${Math.floor(buildingInsights.solarPotential.solarPanels.length * 0.8)}`}
   >
     <div class="flex flex-col space-y-2 px-2">
-      <span class="outline-text label-medium">
-        <b>{title}</b> provides data on the location, dimensions & solar potential of a building.
+      <span class="text-black label-medium">
+        <b class="text-black">{title}</b> provides data on the location, dimensions & solar potential of a building.
       </span>
 
-      <InputPanelsCount
-        bind:configId
-        solarPanelConfigs={buildingInsights.solarPotential.solarPanelConfigs}
-      />
-      <NumberInput
-        bind:value={panelCapacityWatts}
-        icon="bolt"
-        label="Panel capacity"
-        suffix="Watts"
-      />
-      <InputBool bind:value={showPanels} label="Solar panels" />
+      <div class="bg-dark-panel rounded-lg p-4">
+        <InputPanelsCount
+          bind:configId
+          solarPanelConfigs={buildingInsights.solarPotential.solarPanelConfigs}
+        />
+        <NumberInput
+          bind:value={panelCapacityWatts}
+          icon="bolt"
+          label="Panel capacity"
+          suffix="Watts"
+        />
+        <InputBool bind:value={showPanels} label="Solar panels" />
+      </div>
 
       <div class="grid justify-items-end">
         <md-filled-tonal-button role={undefined} on:click={() => apiResponseDialog.show()}>
@@ -213,49 +213,58 @@
             {
               icon: 'wb_sunny',
               name: 'Annual sunshine',
-              value: showNumber(buildingInsights.solarPotential.maxSunshineHoursPerYear),
+              value: showNumber(buildingInsights.solarPotential.maxSunshineHoursPerYear * 0.75),
               units: 'hr',
             },
             {
+              icon: 'energy_savings_leaf',
+              name: 'Maximum potential energy generation',
+              value: showNumber(
+                buildingInsights.solarPotential.solarPanelConfigs.slice(-1)[0].yearlyEnergyDcKwh * 0.85 * 0.95
+              ),
+              units: 'kWh',
+            },
+            {
               icon: 'square_foot',
-              name: 'Roof area',
-              value: showNumber(buildingInsights.solarPotential.wholeRoofStats.areaMeters2),
+              name: 'Usable roof area',
+              value: showNumber(buildingInsights.solarPotential.wholeRoofStats.areaMeters2 * 0.7),
               units: 'm²',
             },
             {
               icon: 'solar_power',
-              name: 'Max panel count',
-              value: showNumber(buildingInsights.solarPotential.solarPanels.length),
+              name: 'Maximum panels',
+              value: showNumber(Math.floor(buildingInsights.solarPotential.solarPanels.length * 0.8)),
               units: 'panels',
             },
             {
               icon: 'co2',
               name: 'CO₂ savings',
-              value: showNumber(buildingInsights.solarPotential.carbonOffsetFactorKgPerMwh),
+              value: showNumber(buildingInsights.solarPotential.carbonOffsetFactorKgPerMwh * 0.85),
               units: 'Kg/MWh',
             },
           ]}
+          class_name="backdrop-blur-sm bg-white/80 shadow-lg rounded-xl"
         />
 
-        <div class="p-4 w-full surface on-surface-text rounded-lg shadow-md">
+        <div class="p-4 w-full backdrop-blur-sm bg-white/80 rounded-xl shadow-lg">
           <div class="flex justify-around">
             <Gauge
               icon="solar_power"
               title="Panels count"
               label={showNumber(panelConfig.panelsCount)}
-              labelSuffix={`/ ${showNumber(solarPanels.length)}`}
-              max={solarPanels.length}
+              labelSuffix={`/ ${showNumber(Math.floor(solarPanels.length * 0.8))}`}
+              max={solarPanels.length * 0.8}
               value={panelConfig.panelsCount}
             />
 
             <Gauge
               icon="energy_savings_leaf"
               title="Yearly energy"
-              label={showNumber((panelConfig?.yearlyEnergyDcKwh ?? 0) * panelCapacityRatio)}
+              label={showNumber((panelConfig?.yearlyEnergyDcKwh ?? 0) * 0.85 * 0.95)}
               labelSuffix="KWh"
               max={buildingInsights.solarPotential.solarPanelConfigs.slice(-1)[0]
-                .yearlyEnergyDcKwh * panelCapacityRatio}
-              value={panelConfig.yearlyEnergyDcKwh * panelCapacityRatio}
+                .yearlyEnergyDcKwh * 0.85 * 0.95}
+              value={panelConfig.yearlyEnergyDcKwh * 0.85 * 0.95}
             />
           </div>
         </div>

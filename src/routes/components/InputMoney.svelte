@@ -23,12 +23,17 @@
   export let prefix = '$';
   export let suffix: string | undefined = undefined;
   export let precision = 2;
+  export let min: number | undefined = 0;
+  export let max: number | undefined = undefined;
+  export let step: number | undefined = undefined;
   export let onChange: (x: number) => void = () => {};
 </script>
 
 <NumberInput
   bind:value
-  min={0}
+  {min}
+  {max}
+  {step}
   {icon}
   {label}
   {suffix}
